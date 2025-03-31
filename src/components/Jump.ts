@@ -48,7 +48,7 @@ export class Jump extends Component implements IJump {
    * @returns True if a jump was executed, false otherwise
    */
   executeJumpIfRequested(): boolean {
-    if (this.jumpRequested) {
+    if (this.jumpRequested && this.isOnSurface && this.jumpCooldown <= 0) {
       this.isJumping = true;
       this.isOnSurface = false;
       this.jumpRequested = false;
@@ -64,7 +64,7 @@ export class Jump extends Component implements IJump {
    */
   updateCooldown(deltaTime: number): void {
     if (this.jumpCooldown > 0) {
-      this.jumpCooldown -= deltaTime;
+      this.jumpCooldown = Math.max(0, this.jumpCooldown - deltaTime);
     }
   }
 }

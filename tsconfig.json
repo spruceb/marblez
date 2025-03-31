@@ -21,7 +21,8 @@
     "outDir": "./dist",
     "rootDir": "./src",
     "lib": ["DOM", "ESNext"],
-    "types": ["three"]
+    "types": ["three"],
+    "isolatedModules": true
   },
   "include": ["src/**/*.ts"],
   "exclude": ["node_modules", "dist"]

@@ -46,11 +46,10 @@ export class RenderSystem extends System implements IRenderSystem {
           this.updateMarbleRotation(entity, transform, render, physics, deltaTime);
         } else {
           // For other objects, use the transform rotation directly
-          render.mesh.rotation.set(
-            transform.rotation.x,
-            transform.rotation.y,
-            transform.rotation.z
-          );
+          // Direct assignment for Euler rotation
+          render.mesh.rotation.x = transform.rotation.x;
+          render.mesh.rotation.y = transform.rotation.y;
+          render.mesh.rotation.z = transform.rotation.z;
         }
         
         // Add to scene if not already added

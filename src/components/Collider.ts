@@ -19,11 +19,11 @@ export class Collider extends Component implements ICollider {
    * @param type The type of collider ('box', 'sphere', 'torus', etc.)
    * @param params Parameters for the collider (size, radius, etc.)
    */
-  constructor(type: ColliderType, params: Record<string, any> = {}) {
+  constructor(type: ColliderType, params: Record<string, any> = {}, isTrigger: boolean = false) {
     super();
     this.type = type;
     this.params = params;
-    this.isTrigger = false; // If true, detects collisions but doesn't respond physically
+    this.isTrigger = isTrigger; // If true, detects collisions but doesn't respond physically
     this.bounce = PHYSICS.BOUNCE_COEFFICIENT; // Bounciness factor
     
     // For debug visualization
