@@ -160,8 +160,8 @@ export class ObstacleFactory {
       .addComponent(new Collider('torus', { 
         radius: radius, 
         tube: tube,
-        innerRadius: radius - tube - OBJECTS.MARBLE_RADIUS,
-        outerRadius: radius + tube + OBJECTS.MARBLE_RADIUS
+        innerRadius: radius - tube,
+        outerRadius: radius + tube
       }))
       .addComponent(new Surface(0.7))
       .addComponent(new Physics(0, 0))
@@ -296,6 +296,10 @@ export class ObstacleFactory {
    * @param radius Radius of the ring
    * @param tubeRadius Thickness of the ring tube
    * @returns The created ring entity
+   * 
+   * NOTE: This function is currently unused due to collision detection issues.
+   * The ring obstacle creates an invisible wall that blocks player movement.
+   * A complete rewrite of the torus collision detection would be needed to fix this.
    */
   static createRing(
     world: IWorld,

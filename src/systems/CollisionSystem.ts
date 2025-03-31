@@ -395,73 +395,82 @@ export class CollisionSystem extends System implements ICollisionSystem {
       penetration: 0
     };
     
-    // Transform sphere to torus local space
+    // Transform sphere position to torus local space
     const localSpherePos = new THREE.Vector3(
       spherePos.x - torusPos.x,
       spherePos.y - torusPos.y,
       spherePos.z - torusPos.z
     );
     
-    // Apply inverse rotation
+    // Create transformation matrices to handle the torus rotation
     const rotMatrix = new THREE.Matrix4().makeRotationFromEuler(
       new THREE.Euler(torusRot.x, torusRot.y, torusRot.z)
     );
     const invRotMatrix = rotMatrix.clone().invert();
+    
+    // Apply inverse rotation to get sphere in torus space
     localSpherePos.applyMatrix4(invRotMatrix);
     
-    // Assuming torus is in XZ plane after rotation
+    // Torus is assumed to be in the XZ plane after rotation with the hole along the Y axis
+    // First, get the sphere's position in the XZ plane
     const sphereXZ = new THREE.Vector2(localSpherePos.x, localSpherePos.z);
+    
+    // Distance from torus center in XZ plane
     const distanceFromCenter = sphereXZ.length();
     
-    // Check if sphere is passing through the hole
-    const innerRadius = torusRadius - torusTube - sphereRadius;
+    // Calculate distance from the ring's centerline (circular part)
+    // This is the shortest distance from the sphere's center to the torus's centerline ring
+    let closestPoint;
+    let distanceFromRing;
     
-    if (distanceFromCenter < innerRadius && Math.abs(localSpherePos.y) < torusTube + sphereRadius) {
-      // We're going through the hole, no collision
+    if (distanceFromCenter < 0.001) {
+      // Special case: sphere is on the torus center axis
+      // Any point on the ring at the same height is equidistant
+      closestPoint = new THREE.Vector3(torusRadius, localSpherePos.y, 0);
+      distanceFromRing = torusRadius;
+    } else {
+      // Get the closest point on the torus centerline ring
+      const ringPoint = sphereXZ.clone().normalize().multiplyScalar(torusRadius);
+      closestPoint = new THREE.Vector3(ringPoint.x, localSpherePos.y, ringPoint.y);
+      distanceFromRing = new THREE.Vector2(
+        localSpherePos.x - closestPoint.x,
+        localSpherePos.z - closestPoint.z
+      ).length();
+    }
+    
+    // Now check if we're colliding with the torus tube
+    const collisionWithTube = distanceFromRing < torusTube + sphereRadius;
+    
+    // Check if we're going through the middle of the ring
+    // We pass through if we're within the inner radius and our y-position isn't hitting the tube
+    const isPassingThroughRing = 
+      distanceFromCenter < (torusRadius - torusTube - sphereRadius) && 
+      Math.abs(localSpherePos.y) < torusTube + sphereRadius;
+    
+    // If we're passing through the ring, there's no collision
+    if (isPassingThroughRing) {
       return result;
     }
     
-    // Find closest point on torus circle center line to sphere center
-    const closestPointOnCircle = new THREE.Vector2(0, 0);
-    if (distanceFromCenter > 0) {
-      closestPointOnCircle.copy(sphereXZ).normalize().multiplyScalar(torusRadius);
-    }
-    
-    // Calculate closest point on torus surface
-    const closestPoint = new THREE.Vector3(
-      closestPointOnCircle.x,
-      localSpherePos.y,
-      closestPointOnCircle.y
-    );
-    
-    // Adjust for torus tube
-    const directionFromCircle = new THREE.Vector3(
-      localSpherePos.x - closestPoint.x,
-      localSpherePos.y - closestPoint.y,
-      localSpherePos.z - closestPoint.z
-    );
-    
-    if (directionFromCircle.length() > 0) {
-      directionFromCircle.normalize();
-      closestPoint.add(directionFromCircle.multiplyScalar(torusTube));
-    }
-    
-    // Check collision
-    const distance = localSpherePos.distanceTo(closestPoint);
-    result.collided = distance < sphereRadius;
+    result.collided = collisionWithTube;
     
     if (result.collided) {
-      result.penetration = sphereRadius - distance;
+      // Calculate the penetration depth
+      result.penetration = torusTube + sphereRadius - distanceFromRing;
       
-      // Calculate normal
-      if (distance > 0) {
-        result.normal.subVectors(localSpherePos, closestPoint).normalize();
+      // Calculate the collision normal (direction from closest point on torus to sphere center)
+      const vectorToSphere = new THREE.Vector3();
+      vectorToSphere.subVectors(localSpherePos, closestPoint);
+      
+      if (vectorToSphere.length() > 0.001) {
+        // Normalize the vector
+        result.normal.copy(vectorToSphere).normalize();
       } else {
-        // Default normal if distance is zero
+        // If sphere center is exactly on the closest point (very rare), use a default normal
         result.normal.set(0, 1, 0);
       }
       
-      // Transform normal back to world space
+      // Transform the normal back to world space
       result.normal.applyMatrix4(rotMatrix);
     }
     

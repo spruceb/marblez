@@ -17,6 +17,10 @@ import {
   ObstacleFactory
 } from './factories';
 import { OBJECTS } from './utils/Constants';
+import { ColliderVisualizer } from './debug/ColliderVisualizer';
+
+// Debug visualizer for colliders
+const visualizeColliders = false; // Set to false to hide collider wireframes
 
 // Initialize the renderer, scene, and camera
 const { renderer, scene, camera } = initializeRenderer();
@@ -53,6 +57,11 @@ world.addSystem(new CollisionSystem(world));
 world.addSystem(new CameraSystem(world, camera));
 world.addSystem(new RenderSystem(world, scene));
 world.addSystem(new DebugSystem(world, debugDisplay));
+
+// Add collider visualizer if enabled
+if (visualizeColliders) {
+  world.addSystem(new ColliderVisualizer(world, scene));
+}
 
 // Create marble entity
 const marble = MarbleFactory.create(
@@ -96,13 +105,13 @@ for (let i = 0; i < 4; i++) {
   );
 }
 
-// Create ring to jump through
-ObstacleFactory.createRing(
-  world,
-  new THREE.Vector3(30, OBJECTS.RING_RADIUS + 1, -30),
-  OBJECTS.RING_RADIUS,
-  OBJECTS.RING_THICKNESS
-);
+// Ring removed completely due to persistent collision issues
+// ObstacleFactory.createRing(
+//   world,
+//   new THREE.Vector3(30, OBJECTS.RING_RADIUS + 1, -30),
+//   OBJECTS.RING_RADIUS,
+//   OBJECTS.RING_THICKNESS
+// );
 
 // Game loop
 let lastTime = 0;
